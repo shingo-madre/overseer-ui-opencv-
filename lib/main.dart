@@ -1,22 +1,17 @@
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'homepage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:overseer_b201/authServices.dart';
+import 'package:overseer_b201/homepage.dart';
+import 'package:flutter/cupertino.dart';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginDemo(),
-    );
-  }
-}
+void main() => runApp(MaterialApp(
+  initialRoute: '/login',
+  routes: {
+    '/login': (context) => LoginDemo(),
+    '/homepage': (context) => homepageDemo(),
+  },
+));
 
 class LoginDemo extends StatefulWidget {
   @override
@@ -24,77 +19,105 @@ class LoginDemo extends StatefulWidget {
 }
 
 class _LoginDemoState extends State<LoginDemo> {
+  final _key = GlobalKey<FormState>();
 
+  final authServices auth = authServices();
+
+  TextEditingController _emailContoller = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.white,
-
-      body: Column(
-        children: <Widget>[
-          Container(
-            height: 100,
-          ),
-          Padding(
-              padding: const EdgeInsets.only(top: 20.0),
-              child: Center(
-                child: Container(
-                  width: 200,
-                  height: 150,
-                  child: Image.asset('assets/Overseer Logo.jpg'),
+      body: Container(
+        color: Colors.white,
+        child: Center(
+          child: Form(
+            key: _key,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'O V E R S E E R',
+                  style: TextStyle(
+                    color: Colors.blueGrey,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-          ),
-          Padding(
-              padding: const EdgeInsets.only(left: 50.0, right: 50.0, top: 0, bottom: 15.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: "Email/Username",
-                  hintText: "Email dan Username yang anda daftarkan",
+                Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                          height: 30,
+                      ),
+                      TextFormField(
+                        controller: _emailContoller,
+                        validator: (value) {
+                          if (value.isEmpty) {
+                            return 'Email cannot be empty';
+                          } else
+                            return null;
+                        },
+                        decoration: InputDecoration(
+                            labelText: 'Email',
+                            labelStyle: TextStyle(color: Colors.blueGrey)),
+                            style: TextStyle(color: Colors.black),
+                      ),
+                      SizedBox(height: 30),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        validator: (value) {
+                          if (value.isEmpty) {
+                            return 'Password cannot be empty';
+                          } else
+                            return null;
+                        },
+                        decoration: InputDecoration(
+                            labelText: 'Password',
+                            labelStyle: TextStyle(color: Colors.blueGrey)),
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      SizedBox(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          FlatButton(
+                            child: Text('Login'),
+                            onPressed: () {
+                              if (_key.currentState.validate()) {
+                                signInUser();
+                              }
+                            },
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              )
-          ),
-          Padding(
-              padding: const EdgeInsets.only(left: 50.0, right: 50.0, top: 15.0, bottom: 0),
-              child: TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: "Password",
-                  hintText: "Password yang anda daftarkan"
-                ),
-              ),
-          ),
-          FlatButton(
-              onPressed: null,
-              padding: EdgeInsets.only(bottom: 20.0),
-              child: Text(
-                "Forgot Password",
-                style: TextStyle(color: Colors.blue, fontSize: 15),
-              ),
-          ),
-          Container(
-            height: 50,
-            width: 290,
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(10),
+              ],
             ),
-            child: FlatButton(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => homepageDemo()));
-                },
-                child: Text(
-                  'Login',
-                  style: TextStyle(color: Colors.white, fontSize: 25),
-                ),
-            ),
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  void signInUser() async {
+    dynamic  authResult = await auth.loginUser(_emailContoller.text, _passwordController.text);
+    if(authResult  == null){
+      print('Sign in error');
+    } else{
+      _emailContoller.clear();
+      _passwordController.clear();
+      Navigator.pushNamed(context, '/homepage');
+    }
   }
 }
 
